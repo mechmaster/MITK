@@ -755,82 +755,6 @@ SliceNavigationController
 
             this->ExecuteOperation( &doOp );
 
-            // If click was performed in this render window than we have to update the status bar information about position and pixel value.
-            if(baseRenderer == m_Renderer)
-            {
-              {
-                std::string statusText;
-                TNodePredicateDataType<mitk::Image>::Pointer isImageData = TNodePredicateDataType<mitk::Image>::New();
-
-                mitk::DataStorage::SetOfObjects::ConstPointer nodes = baseRenderer->GetDataStorage()->GetSubset(isImageData).GetPointer();
-                mitk::Point3D worldposition = posEvent->GetWorldPosition();
-                //int  maxlayer = -32768;
-                mitk::Image::Pointer image3D;
-                mitk::DataNode::Pointer node;
-                mitk::DataNode::Pointer topSourceNode;
-
-                bool isBinary (false);
-                int component = 0;
-
-                node = this->GetTopLayerNode(nodes,worldposition);
-                if(node.IsNotNull())
-                {
-                  node->GetBoolProperty("binary", isBinary);
-                  if(isBinary)
-                  {
-                    mitk::DataStorage::SetOfObjects::ConstPointer sourcenodes = baseRenderer->GetDataStorage()->GetSources(node, NULL, true);
-                    if(!sourcenodes->empty())
-                    {
-                      topSourceNode = this->GetTopLayerNode(sourcenodes,worldposition);
-                    }
-                    if(topSourceNode.IsNotNull())
-                    {
-                      image3D = dynamic_cast<mitk::Image*>(topSourceNode->GetData());
-                      topSourceNode->GetIntProperty("Image.Displayed Component", component);
-                    }
-                    else
-                    {
-                      image3D = dynamic_cast<mitk::Image*>(node->GetData());
-                      node->GetIntProperty("Image.Displayed Component", component);
-                    }
-                  }
-                  else
-                  {
-                    image3D = dynamic_cast<mitk::Image*>(node->GetData());
-                    node->GetIntProperty("Image.Displayed Component", component);
-                  }
-                }
-                std::stringstream stream;
-                stream.imbue(std::locale::classic());
-
-                // get the position and gray value from the image and build up status bar text
-                if(image3D.IsNotNull())
-                {
-                  itk::Index<3> p;
-                  image3D->GetGeometry()->WorldToIndex(worldposition, p);
-                  stream.precision(2);
-                  stream<<"Position: <" << std::fixed <<worldposition[0] << ", " << std::fixed << worldposition[1] << ", " << std::fixed << worldposition[2] << "> mm";
-                  stream<<"; Index: <"<<p[0] << ", " << p[1] << ", " << p[2] << "> ";
-                  mitk::ScalarType pixelValue = image3D->GetPixelValueByIndex(p, baseRenderer->GetTimeStep(), component);
-
-                  if (fabs(pixelValue)>1000000 || fabs(pixelValue) < 0.01)
-                  {
-                    stream<<"; Time: " << baseRenderer->GetTime() << " ms; Pixelvalue: " << std::scientific<< pixelValue <<"  ";
-                  }
-                  else
-                  {
-                    stream<<"; Time: " << baseRenderer->GetTime() << " ms; Pixelvalue: "<< pixelValue <<"  ";
-                  }
-                }
-                else
-                {
-                  stream << "No image information at this position!";
-                }
-
-                statusText = stream.str();
-                mitk::StatusBar::GetInstance()->DisplayGreyValueText(statusText.c_str());
-              }
-            }
             ok = true;
             break;
           }
@@ -850,6 +774,7 @@ SliceNavigationController
     return true;
   }
 
+  ok = true;
   return false;
 }
 } // namespace
