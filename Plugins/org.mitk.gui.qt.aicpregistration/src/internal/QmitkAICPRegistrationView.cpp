@@ -25,6 +25,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 // Qt
 #include <QMessageBox>
 #include <QThread>
+#include <QDir>
 
 // MITK
 #include <mitkSurface.h>
@@ -33,13 +34,19 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <mitkAnisotropicIterativeClosestPointRegistration.h>
 #include <mitkCovarianceMatrixCalculator.h>
 #include <mitkAnisotropicRegistrationCommon.h>
+#include "mitkIOUtil.h"
 
 // vtk
 #include <vtkSmartPointer.h>
 #include <vtkPolyData.h>
 #include <vtkCleanPolyData.h>
+#include <vtkQuadricDecimation.h>
 
 const std::string QmitkAICPRegistrationView::VIEW_ID = "org.mitk.views.aicpregistration";
+const QString APP_DIR = "/MITK";
+const QString SURFACE_PATH = "/MITK/surface.stl";
+
+
 
  /**
    * @brief Pimpl holding the datastructures used by the
@@ -101,6 +108,8 @@ public:
 };
 
 QmitkAICPRegistrationView::QmitkAICPRegistrationView()
+:m_TmpPath(QDir::tempPath() + APP_DIR),
+m_SurfacePath(QDir::tempPath() + SURFACE_PATH)
 {
   d = new AICPRegistrationViewData();
 }
@@ -124,6 +133,9 @@ void QmitkAICPRegistrationView::CreateQtPartControl( QWidget *parent )
   connect ( m_Controls.m_EnableTrimming, SIGNAL(clicked()), this, SLOT(OnEnableTrimming()) );
   connect ( d->m_Worker, SIGNAL( RegistrationFinished()), this, SLOT( OnRegistrationFinished()) );
   connect(d->m_RegistrationThread,SIGNAL(started()), d->m_Worker,SLOT(RegistrationThreadFunc()) );
+
+
+  connect(m_Controls.m_TOFRegistration, SIGNAL(clicked()), this, SLOT(RegisterTOF()));
 
   // move the u worker to the thread
   d->m_Worker->moveToThread(d->m_RegistrationThread);
@@ -162,7 +174,6 @@ void QmitkAICPRegistrationView::CreateQtPartControl( QWidget *parent )
   m_Controls.m_TrimmFactorLabel->setEnabled(false);
   m_Controls.m_TrimmFactorSpinbox->setEnabled(false);
 }
-
 
 bool QmitkAICPRegistrationView::CheckInput()
 {
@@ -425,3 +436,113 @@ void UIWorker::RegistrationThreadFunc()
 
   emit RegistrationFinished();
 }
+
+void QmitkAICPRegistrationView::RegisterTOF()
+{
+  RefreshSurfaceSnapshot();
+  mitk::DataNode::Pointer  surface_node = this->GetDataStorage()->GetNamedNode("Surface_snapshot");
+  m_Controls.m_FixedSurfaceComboBox->SetSelectedNode(surface_node);
+  surface_node = NULL;
+  surface_node = this->GetDataStorage()->GetNamedNode("Torso");
+  m_Controls.m_MovingSurfaceComboBox->SetSelectedNode(surface_node);
+  surface_node = NULL;
+
+  //OnStartRegistration();
+}
+
+void QmitkAICPRegistrationView::RefreshSurfaceSnapshot()
+{
+  MITK_INFO << "Save surface into temporary folder";
+
+  mitk::Surface::Pointer surface_image;
+  mitk::DataNode::Pointer surface_node = this->GetDataStorage()->GetNamedNode("Surface_snapshot");
+
+  if (surface_node)
+  {
+    this->GetDataStorage()->Remove(surface_node);
+    surface_node = NULL;
+  }
+
+  if (!QDir().mkpath(m_TmpPath))
+  {
+    return;
+  }
+
+  surface_image = NULL;
+  surface_node = NULL;
+
+  surface_node = this->GetDataStorage()->GetNamedNode("Surface");
+  surface_image = dynamic_cast<mitk::Surface*>(surface_node->GetData());
+
+  mitk::IOUtil::SaveSurface(surface_image, m_SurfacePath.toStdString());
+
+  surface_image = NULL;
+  surface_node = NULL;
+
+  surface_node = mitk::DataNode::New();
+  surface_node->SetName("Surface_snapshot");
+
+  //load Surface
+  surface_image = mitk::IOUtil::LoadSurface(m_SurfacePath.toStdString());
+
+  vtkQuadricDecimation* decimate = vtkQuadricDecimation::New();
+  decimate->SetTargetReduction(0.5);
+
+  vtkPolyData *polydata;
+
+  polydata = surface_image->GetVtkPolyData();
+
+  decimate->SetInputData(polydata);
+  decimate->Update();
+  polydata->Delete();
+  polydata = decimate->GetOutput();
+  polydata->Register(nullptr);
+  //decimate->Delete();
+   
+  surface_image->SetVtkPolyData(polydata);
+  polydata->UnRegister(nullptr);
+  
+  surface_node->SetData(surface_image);
+  
+  mitk::Color colorProperty;
+  colorProperty.SetRed(0);
+  colorProperty.SetGreen(1);
+  colorProperty.SetBlue(0);
+
+  // visualization properties
+  surface_node->SetProperty("color", mitk::ColorProperty::New(colorProperty));
+  surface_node->SetProperty("helper object", mitk::BoolProperty::New(true));
+  surface_node->SetProperty("visible", mitk::BoolProperty::New(false)); 
+  
+  this->GetDataStorage()->Add(surface_node); // add as a child, because the segmentation "derives" from the original
+
+  mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+
+  QFile(m_SurfacePath).remove();
+  QDir().rmdir(m_TmpPath);
+}
+
+//void QmitkAICPRegistrationView::RefreshSurfaceSnapshot()
+//{
+//  MITK_INFO << "Save surface into temporary folder";
+//
+//  mitk::DataNode::Pointer surface_node = this->GetDataStorage()->GetNamedNode("Surface_snapshot");
+//  mitk::Surface::Pointer surface_image = dynamic_cast<mitk::Surface*>(surface_node->GetData());
+//
+//  vtkQuadricDecimation* decimate = vtkQuadricDecimation::New();
+//  decimate->SetTargetReduction(0.5);
+//
+//  vtkPolyData *polydata;
+//
+//  polydata = surface_image->GetVtkPolyData(0);
+//
+//  decimate->SetInputData(polydata);
+//  decimate->Update();
+//  polydata->Delete();
+//  polydata = decimate->GetOutput();
+//  polydata->Register(nullptr);
+//  decimate->Delete();
+//
+//  surface_image->SetVtkPolyData(polydata, 0);
+//  polydata->UnRegister(nullptr);
+//}

@@ -94,6 +94,10 @@ class QmitkAICPRegistrationView : public QmitkAbstractView
     /** Enables/disables the trimmed version of the A-ICP algorithm.*/
     void OnEnableTrimming();
 
+    void RegisterTOF();
+
+    void RefreshSurfaceSnapshot();
+
   public slots:
 
     /** Method called when the algorithm is finishes. This method will setup
@@ -116,6 +120,11 @@ class QmitkAICPRegistrationView : public QmitkAbstractView
     /** Check for the correct input data.*/
     bool CheckInput();
 
+
+
+    QString m_TmpPath;
+    QString m_SurfacePath;
+    //QString m_CorrectedMeanPath;
 };
 
 #endif // QmitkAICPRegistrationView_h

@@ -339,6 +339,13 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="m_TOFRegistration">
+          <property name="text">
+           <string>ToF Registration</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="m_RegisterSurfaceButton">
           <property name="text">
            <string>Register Surfaces</string>
