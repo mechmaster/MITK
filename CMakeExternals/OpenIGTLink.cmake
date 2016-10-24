@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 if(MITK_USE_OpenIGTLink)
 
-  set(OpenIGTLink_DIR "C:\builds\openigtlink15")
+  set(OpenIGTLink_DIR "C:/builds/openigtlink15")
 
   # Sanity checks
   if(DEFINED OpenIGTLink_DIR AND NOT EXISTS ${OpenIGTLink_DIR})
