@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------
 if(MITK_USE_OpenIGTLink)
 
-  set(OpenIGTLink_DIR "C:/builds/openigtlink15")
+  set(OpenIGTLink_DIR CACHE "C:/builds/openigtlink15" FORCE)
   
 
   # Sanity checks
