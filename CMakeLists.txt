@@ -889,8 +889,6 @@ endif()
 # Same as SOFA above
 link_directories(${Boost_LIBRARY_DIRS})
 
-set(MITK_USE_OpenIGTLink ON CACHE BOOL "MITK Use OpenIGTLink Library" FORCE)
-
 if(MITK_USE_OpenIGTLink)
   # Same as SOFA above
   link_directories(${OpenIGTLink_LIBRARY_DIRS})
