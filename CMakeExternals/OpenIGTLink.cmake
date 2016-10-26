@@ -3,11 +3,11 @@
 #-----------------------------------------------------------------------------
 if(MITK_USE_OpenIGTLink)
 
-  set(OpenIGTLink_DIR CACHE "C:/builds/openigtlink15" FORCE)
-  
-
+  set(OpenIGTLink_DIR CACHE "C:\\builds\\openigtlink15" FORCE)
+ 
   # Sanity checks
   if(DEFINED OpenIGTLink_DIR AND NOT EXISTS ${OpenIGTLink_DIR})
+    message(FATAL_ERROR "${OpenIGTLink_DIR}")
     message(FATAL_ERROR "OpenIGTLink_DIR variable is defined but corresponds to non-existing directory")
   endif()
 
