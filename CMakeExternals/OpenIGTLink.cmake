@@ -3,8 +3,9 @@
 #-----------------------------------------------------------------------------
 if(MITK_USE_OpenIGTLink)
 
-  set(OpenIGTLink_DIR CACHE "C:\\builds\\openigtlink15" FORCE)
- 
+  set(OpenIGTLink_DIR CACHE "C:/builds/openigtlink15" FORCE)
+  message( "${OpenIGTLink_DIR}")
+    
   # Sanity checks
   if(DEFINED OpenIGTLink_DIR AND NOT EXISTS ${OpenIGTLink_DIR})
     message(FATAL_ERROR "${OpenIGTLink_DIR}")
