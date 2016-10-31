@@ -27,6 +27,8 @@ See LICENSE.txt or http://www.mitk.org for details.
 // forwarddeclaration
 class TOFRegistrationViewData;
 
+class QTimer;
+
 /**
   * \brief Implemenation of a worker thread class.
   *
@@ -94,6 +96,7 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
 
     /** Enables/disables the trimmed version of the A-ICP algorithm.*/
     void OnEnableTrimming();
+    void OnUpdate();
 
   public slots:
 
@@ -119,6 +122,7 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
 
     QString m_TmpPath;
     QString m_SurfacePath;
+    QTimer* m_UpdateTimer;
 
 };
 

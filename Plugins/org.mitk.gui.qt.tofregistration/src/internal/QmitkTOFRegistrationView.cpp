@@ -28,6 +28,7 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QTimer>
 
 
 // MITK
@@ -111,13 +112,16 @@ public:
 
 QmitkTOFRegistrationView::QmitkTOFRegistrationView():
     m_TmpPath(QDir::tempPath() + APP_DIR),
-    m_SurfacePath(QDir::tempPath() + SURFACE_PATH)
+    m_SurfacePath(QDir::tempPath() + SURFACE_PATH),
+    m_UpdateTimer(new QTimer(this))
 {
   d = new TOFRegistrationViewData();
+  connect(m_UpdateTimer, SIGNAL(timeout()), this, SLOT(OnUpdate()));
 }
 
 QmitkTOFRegistrationView::~QmitkTOFRegistrationView()
 {
+    m_UpdateTimer->stop();
   if ( d )
     delete d;
 }
@@ -253,71 +257,9 @@ void QmitkTOFRegistrationView::OnStartRegistration()
   m_Controls.m_RegisterSurfaceButton->setEnabled(false);
 
   mitk::RenderingManager::GetInstance()->RequestUpdateAll();
-}
 
-//Old Version where snapshot is made via saving dynamic TOF Surface on hard drive
-//void QmitkTOFRegistrationView::OnRefreshSnapshot()
-//{
-//    //is where any nodes with name "Surface"
-//    mitk::DataNode::Pointer surface_node = this->GetDataStorage()->GetNamedNode("Surface");
-//
-//    if (!surface_node)
-//    {
-//        return;
-//    }
-//
-//    if (!QDir().mkpath(m_TmpPath))
-//    {
-//        return;
-//    }
-//
-//    mitk::Surface::Pointer surface = dynamic_cast<mitk::Surface*>(surface_node->GetData());
-//    
-//    //Save it
-//    mitk::IOUtil::SaveSurface(surface, m_SurfacePath.toStdString());
-//
-//    //Deleting old snapshot node
-//    surface_node = NULL;
-//    surface_node = this->GetDataStorage()->GetNamedNode("Surface_snapshot");
-//
-//    if (surface_node)
-//    {
-//        this->GetDataStorage()->Remove(surface_node);
-//        surface_node = NULL;
-//    }
-//
-//    //reading new snapshot from drive
-//    surface = NULL;
-//    surface = mitk::IOUtil::LoadSurface(m_SurfacePath.toStdString());
-//
-//    //downmeshing snapshot
-//    vtkPolyData *polydata = surface -> GetVtkPolyData();
-//    vtkQuadricDecimation* decimate = vtkQuadricDecimation::New();
-//    decimate->SetTargetReduction(0.8);
-//    decimate->SetInputData(polydata);
-//    decimate->Update();
-//    polydata->Delete();
-//    polydata = decimate->GetOutput();
-//    polydata->Register(nullptr);
-//  
-//    surface->SetVtkPolyData(polydata);
-//
-//    //decimate->Delete();
-//
-//    surface_node = mitk::DataNode::New();
-//    surface_node->SetData(surface);
-//    surface_node->SetName("Surface_snapshot");
-//
-//    mitk::Color colorProperty;
-//    colorProperty.SetRed(0);
-//    colorProperty.SetGreen(1);
-//    colorProperty.SetBlue(0);
-//
-//    this->GetDataStorage()->Add(surface_node);
-//
-//    QFile(m_SurfacePath).remove();
-//    QDir().rmdir(m_TmpPath);
-//}
+  if (!m_UpdateTimer->isActive()) { m_UpdateTimer->start(60000); }
+}
 
 void QmitkTOFRegistrationView::OnRefreshSnapshot()
 {
@@ -329,18 +271,9 @@ void QmitkTOFRegistrationView::OnRefreshSnapshot()
         return;
     }
 
-    if (!QDir().mkpath(m_TmpPath))
-    {
-        return;
-    }
-
     mitk::Surface::Pointer surface = dynamic_cast<mitk::Surface*>(surface_node->GetData());
-
     mitk::Surface::Pointer clone_full_def_surface = surface->Clone();
     
-    //Save it
-    //mitk::IOUtil::SaveSurface(surface, m_SurfacePath.toStdString());
-
     //Deleting old snapshot node
     surface_node = NULL;
     surface_node = this->GetDataStorage()->GetNamedNode("Surface_snapshot");
@@ -353,8 +286,6 @@ void QmitkTOFRegistrationView::OnRefreshSnapshot()
 
     //reading new snapshot from drive
     surface = NULL;
-    //surface = mitk::IOUtil::LoadSurface(m_SurfacePath.toStdString());
-
     surface = clone_full_def_surface;
 
     //downmeshing snapshot
@@ -370,20 +301,45 @@ void QmitkTOFRegistrationView::OnRefreshSnapshot()
     surface->SetVtkPolyData(polydata);
 
     //decimate->Delete();
-
     surface_node = mitk::DataNode::New();
     surface_node->SetData(surface);
-    surface_node->SetName("Surface_snapshot111");
+    surface_node->SetName("Surface_snapshot");
 
     mitk::Color colorProperty;
     colorProperty.SetRed(0);
     colorProperty.SetGreen(1);
     colorProperty.SetBlue(0);
 
+    surface_node->SetColor(colorProperty);
+
     this->GetDataStorage()->Add(surface_node);
 
-    QFile(m_SurfacePath).remove();
-    QDir().rmdir(m_TmpPath);
+    //set selection
+
+    m_Controls.m_FixedSurfaceComboBox->SetSelectedNode(surface_node);
+
+    //is where any nodes with name "Torse"
+    mitk::DataNode::Pointer torse_node = this->GetDataStorage()->GetNamedNode("Torse");
+
+    if (!torse_node)
+    {
+        return;
+    }
+
+    colorProperty.SetRed(1);
+    colorProperty.SetGreen(0);
+    colorProperty.SetBlue(0);
+
+    torse_node->SetColor(colorProperty);
+
+    m_Controls.m_MovingSurfaceComboBox->SetSelectedNode(torse_node);
+
+}
+
+void QmitkTOFRegistrationView::OnUpdate()
+{
+    OnRefreshSnapshot();
+    OnStartRegistration();
 }
 
 void QmitkTOFRegistrationView::OnEnableTreCalculation()
