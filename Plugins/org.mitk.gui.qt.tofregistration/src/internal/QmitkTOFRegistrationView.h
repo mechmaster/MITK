@@ -89,6 +89,7 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
       */
     void OnStartRegistration();
     void OnRefreshSnapshot();
+    void OnAutoRegistration();
     
     /** Enables/disables the calculation of the Target Registration Error (TRE).
       */
@@ -122,7 +123,7 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
 
     QString m_TmpPath;
     QString m_SurfacePath;
-    QTimer* m_UpdateTimer;
+    QTimer* m_AutoRegistrationTimer;
 
 };
 

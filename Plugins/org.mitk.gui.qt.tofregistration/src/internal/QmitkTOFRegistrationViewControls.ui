@@ -353,6 +353,29 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="m_AutoRegistrationCheckButton">
+          <property name="text">
+           <string>Auto Registration</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="m_AutoRegIntervalSecSpinBox">
+          <property name="suffix">
+           <string/>
+          </property>
+          <property name="minimum">
+           <number>20</number>
+          </property>
+          <property name="maximum">
+           <number>500</number>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>

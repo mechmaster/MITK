@@ -113,15 +113,16 @@ public:
 QmitkTOFRegistrationView::QmitkTOFRegistrationView():
     m_TmpPath(QDir::tempPath() + APP_DIR),
     m_SurfacePath(QDir::tempPath() + SURFACE_PATH),
-    m_UpdateTimer(new QTimer(this))
+    m_AutoRegistrationTimer(new QTimer(this))
 {
   d = new TOFRegistrationViewData();
-  connect(m_UpdateTimer, SIGNAL(timeout()), this, SLOT(OnUpdate()));
 }
 
 QmitkTOFRegistrationView::~QmitkTOFRegistrationView()
 {
-    m_UpdateTimer->stop();
+  m_AutoRegistrationTimer->stop();
+  m_AutoRegistrationTimer = NULL;
+
   if ( d )
     delete d;
 }
@@ -137,9 +138,12 @@ void QmitkTOFRegistrationView::CreateQtPartControl( QWidget *parent )
   connect ( m_Controls.m_EnableTreCalculation,SIGNAL(clicked()),this, SLOT(OnEnableTreCalculation()) );
   connect ( m_Controls.m_RegisterSurfaceButton, SIGNAL(clicked()), this, SLOT(OnStartRegistration()) );
   connect ( m_Controls.m_RefreshSnapshotButton, SIGNAL(clicked()), this, SLOT(OnRefreshSnapshot()));
+  connect ( m_Controls.m_AutoRegistrationCheckButton, SIGNAL(clicked()), this, SLOT(OnAutoRegistration()));
   connect ( m_Controls.m_EnableTrimming, SIGNAL(clicked()), this, SLOT(OnEnableTrimming()) );
   connect ( d->m_Worker, SIGNAL( RegistrationFinished()), this, SLOT( OnRegistrationFinished()) );
   connect(d->m_RegistrationThread,SIGNAL(started()), d->m_Worker,SLOT(RegistrationThreadFunc()) );
+
+  connect(m_AutoRegistrationTimer, SIGNAL(timeout()), this, SLOT(OnUpdate()));
 
   // move the u worker to the thread
   d->m_Worker->moveToThread(d->m_RegistrationThread);
@@ -258,7 +262,7 @@ void QmitkTOFRegistrationView::OnStartRegistration()
 
   mitk::RenderingManager::GetInstance()->RequestUpdateAll();
 
-  if (!m_UpdateTimer->isActive()) { m_UpdateTimer->start(60000); }
+
 }
 
 void QmitkTOFRegistrationView::OnRefreshSnapshot()
@@ -281,6 +285,11 @@ void QmitkTOFRegistrationView::OnRefreshSnapshot()
     if (surface_node)
     {
         this->GetDataStorage()->Remove(surface_node);
+
+
+        //not working - on second delete fails
+        //surface_node->Delete();
+
         surface_node = NULL;
     }
 
@@ -334,12 +343,49 @@ void QmitkTOFRegistrationView::OnRefreshSnapshot()
 
     m_Controls.m_MovingSurfaceComboBox->SetSelectedNode(torse_node);
 
+    //OnStartRegistration();
 }
 
 void QmitkTOFRegistrationView::OnUpdate()
 {
     OnRefreshSnapshot();
     OnStartRegistration();
+}
+
+void QmitkTOFRegistrationView::OnAutoRegistration()
+{
+  if (m_Controls.m_AutoRegistrationCheckButton->isChecked())
+  {
+    int intervalInSeconds = m_Controls.m_AutoRegIntervalSecSpinBox->value();
+
+    if (intervalInSeconds < 20)
+    {
+      //show message
+      QMessageBox msg;
+      msg.setIcon(QMessageBox::Critical);
+      const char* message = "Auto Registration is enabled, but interval is lower than 20 seconds.";
+      msg.setText(message);
+      msg.exec();
+      return;
+
+      if (m_AutoRegistrationTimer->isActive())
+      {
+        m_AutoRegistrationTimer->stop();
+      }
+    }
+
+    if (!m_AutoRegistrationTimer->isActive())
+    { 
+      m_AutoRegistrationTimer->start(intervalInSeconds*1000);
+    }
+  }
+  else
+  {
+    if (m_AutoRegistrationTimer->isActive())
+    { 
+      m_AutoRegistrationTimer->stop();
+    }
+  }
 }
 
 void QmitkTOFRegistrationView::OnEnableTreCalculation()
