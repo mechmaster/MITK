@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>472</width>
+    <width>511</width>
     <height>764</height>
    </rect>
   </property>
@@ -20,6 +20,28 @@
    <string>QmitkTemplate</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="m_ConnectToFGroup">
+     <property name="title">
+      <string>ToF Camera Control</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_6">
+      <item>
+       <widget class="QmitkToFConnectionWidget" name="m_ToFConnectionWidget" native="true"/>
+      </item>
+      <item>
+       <widget class="QmitkToFRecorderWidget" name="m_ToFRecorderWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item>
     <widget class="QGroupBox" name="m_InputGroup">
      <property name="title">
@@ -339,6 +361,13 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="m_OldRefreshSnapshotButton">
+          <property name="text">
+           <string>Old Refresh Snapshot</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="m_RefreshSnapshotButton">
           <property name="text">
            <string>Refresh Snapshot</string>
@@ -368,10 +397,13 @@
            <string/>
           </property>
           <property name="minimum">
-           <number>20</number>
+           <number>10</number>
           </property>
           <property name="maximum">
            <number>500</number>
+          </property>
+          <property name="value">
+           <number>10</number>
           </property>
          </widget>
         </item>
@@ -414,6 +446,18 @@
    <class>QmitkDataStorageComboBox</class>
    <extends>QComboBox</extends>
    <header>QmitkDataStorageComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QmitkToFConnectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkToFConnectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkToFRecorderWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkToFRecorderWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

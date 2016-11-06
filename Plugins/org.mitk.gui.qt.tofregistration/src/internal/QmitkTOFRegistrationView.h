@@ -23,6 +23,16 @@ See LICENSE.txt or http://www.mitk.org for details.
 #include <QmitkAbstractView.h>
 #include <QWidget>
 #include "ui_QmitkTOFRegistrationViewControls.h"
+#include <mitkToFImageGrabber.h>
+
+#include <mitkToFImageGrabber.h>
+#include <mitkSurface.h>
+#include <mitkToFDistanceImageToSurfaceFilter.h>
+#include <mitkToFImageRecorder.h>
+#include <mitkToFCompositeFilter.h>
+#include <mitkCameraIntrinsics.h>
+
+#include <vtkCamera.h>
 
 // forwarddeclaration
 class TOFRegistrationViewData;
@@ -82,6 +92,11 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
 
     ~QmitkTOFRegistrationView();
 
+    bool UpdateSurface();
+
+    void SurfaceGenerationInitialize(mitk::ToFDistanceImageToSurfaceFilter::Pointer filter, mitk::ToFImageGrabber::Pointer grabber, mitk::CameraIntrinsics::Pointer intrinsics,
+      mitk::DataNode::Pointer surface, vtkSmartPointer<vtkCamera> camera, bool generateSurface = false, bool showAdvancedOptions = true);
+
   protected slots:
 
     /** Starts the registration. When the method is called a seperate UIWorker
@@ -89,6 +104,7 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
       */
     void OnStartRegistration();
     void OnRefreshSnapshot();
+    void OnOldRefreshSnapshot();
     void OnAutoRegistration();
     
     /** Enables/disables the calculation of the Target Registration Error (TRE).
@@ -98,6 +114,28 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
     /** Enables/disables the trimmed version of the A-ICP algorithm.*/
     void OnEnableTrimming();
     void OnUpdate();
+
+
+    /*!
+    \brief Slot triggered from the timer to update the images and visualization
+    */
+    void OnUpdateCamera();
+    /*!
+    \brief Slot called when the "Connect" button of the ConnectionWidget is pressed
+    */
+    void OnToFCameraConnected();
+    /*!
+    \brief Slot called when the "Disconnect" button of the ConnectionWidget is pressed
+    */
+    void OnToFCameraDisconnected();
+    /*!
+    \brief Slot called when the "Start" button of the RecorderWidget is pressed
+    */
+    void OnToFCameraStarted();
+    /*!
+    \brief Slot called when the "Stop" button of the RecorderWidget is pressed
+    */
+    void OnToFCameraStopped();
 
   public slots:
 
@@ -112,19 +150,42 @@ class QmitkTOFRegistrationView : public QmitkAbstractView
 
     virtual void SetFocus() override;
 
+    void UseToFVisibilitySettings(bool useToF);
+
     Ui::QmitkTOFRegistrationViewControls m_Controls;
 
+
+    mitk::Image::Pointer m_MitkDistanceImage; ///< member holding a pointer to the distance image of the selected camera
+    mitk::Image::Pointer m_MitkAmplitudeImage; ///< member holding a pointer to the amplitude image of the selected camera
+    mitk::Image::Pointer m_MitkIntensityImage; ///< member holding a pointer to the intensity image of the selected camera
+    mitk::Surface::Pointer m_Surface; ///< member holding a pointer to the surface generated from the distance image of the selected camera
+
+    mitk::DataNode::Pointer m_DistanceImageNode; ///< DataNode holding the distance image of the selected camera
+    mitk::DataNode::Pointer m_AmplitudeImageNode; ///< DataNode holding the amplitude image of the selected camera
+    mitk::DataNode::Pointer m_IntensityImageNode; ///< DataNode holding the intensity image of the selected camera
+    mitk::DataNode::Pointer m_RGBImageNode; ///< DataNode holding the rgb image of the selected camera
+    mitk::DataNode::Pointer m_SurfaceNode; ///< DataNode holding the surface generated from the distanc image of the selected camera
+
+                                           // ToF processing and recording filter
+    mitk::ToFImageRecorder::Pointer m_ToFImageRecorder; ///< ToF image recorder used for lossless recording of ToF image data
+    mitk::ToFImageGrabber::Pointer m_ToFImageGrabber; ///< Source of a ToF image processing pipeline. Provides pointers to distance, amplitude and intensity image
+    mitk::ToFDistanceImageToSurfaceFilter::Pointer m_ToFDistanceImageToSurfaceFilter; ///< Filter for calculating a surface representation from a given distance image
+    mitk::ToFCompositeFilter::Pointer m_ToFCompositeFilter; 
+
+    mitk::CameraIntrinsics::Pointer m_CameraIntrinsics; ///< member holding the intrinsic parameters of the camera
+
   private:
+
+    void ChangeHelperObjectsVisibility(bool visible);
 
     TOFRegistrationViewData* d;
 
     /** Check for the correct input data.*/
     bool CheckInput();
-
-    QString m_TmpPath;
-    QString m_SurfacePath;
     QTimer* m_AutoRegistrationTimer;
-
+    mitk::DataNode::Pointer ReplaceNodeData(std::string nodeName, mitk::BaseData* data);
+    bool m_Active;
+    vtkSmartPointer<vtkCamera> m_Camera3d;
 };
 
 #endif // QmitkTOFRegistrationView_h
