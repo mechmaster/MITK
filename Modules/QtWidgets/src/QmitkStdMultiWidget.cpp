@@ -322,7 +322,7 @@ void QmitkStdMultiWidget::InitializeWidget()
   // setup the department logo rendering
   if (!m_displayMetaInfo)
   {
-    m_LogoRendering = mitk::LogoOverlay::New();
+    m_LogoRendering = mitk::LogoAnnotation::New();
     mitk::BaseRenderer::Pointer renderer4 = mitk::BaseRenderer::GetInstance(mitkWidget4->GetRenderWindow());
     m_LogoRendering->SetOpacity(0.5);
     mitk::Point2D offset;
@@ -331,7 +331,7 @@ void QmitkStdMultiWidget::InitializeWidget()
     m_LogoRendering->SetRelativeSize(0.15);
     m_LogoRendering->SetCornerPosition(1);
     m_LogoRendering->SetLogoImagePath("DefaultLogo");
-    renderer4->GetOverlayManager()->AddOverlay(m_LogoRendering.GetPointer(), renderer4);
+    mitk::ManualPlacementAnnotationRenderer::AddAnnotation(m_LogoRendering.GetPointer(), renderer4);
   }
 }
 
